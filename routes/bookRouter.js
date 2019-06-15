@@ -11,7 +11,7 @@ bookRouter.route('/')
         next();
     })
     .get((req,res,next) => {
-        res.end('Sending all books');
+        res.end('Sending id, title, subtitle, ownerid, User.displayname, length, rating for all books');
     })
     .post((req,res,next) => {
         res.end(`Adding book (${req.body.title}, ${req.body.subtitle}, ${req.body.description})`);
@@ -24,7 +24,7 @@ bookRouter.route('/authored')
         next();
     })
     .get((req,res,next) => {
-        res.end(`Sending all books by user ${req.body.userid}`);
+        res.end(`Sending id, startpageid, title, Permission.permissionid, Permission.permissiontype for all books by user ${req.body.userid}`);
     });
 
 bookRouter.route('/opened')
@@ -34,7 +34,7 @@ bookRouter.route('/opened')
         next();
     })
     .get((req,res,next) => {
-        res.end(`Sending all books opened by user ${req.body.userid}`);
+        res.end(`Sending id, Review.reviewid, title, progress, rating, Map.currpage for all books opened by user ${req.body.userid}`);
     });
 
 bookRouter.route('/:bookId')

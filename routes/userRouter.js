@@ -11,7 +11,7 @@ userRouter.route('/')
         next();
     })
     .get((req,res,next) => {
-        res.end(`Sending all authors for book ${req.body.bookid}`);
+        res.end(`Sending User.userid, User.displayname for all authors for book ${req.body.bookid}`);
     })
     .post((req,res,next) => {
         res.end(`Adding user (${req.body.username}, ${req.body.email}, ${req.body.password})`);
@@ -26,11 +26,11 @@ userRouter.route('/:userId')
     .get((req,res,next) => {
         res.end(`Sending user ${req.params.userId}`);
     })
-    .post((req,res,next) => {
-        res.end(`Updating settings for user ${req.params.userId} with details (${req.body.email}, ${req.body.oldpassword}, ${req.body.newpassword})`);
-    })
     .put((req,res,next) => {
         res.end(`Updating user ${req.params.userId} with details (${req.body.displayname}, ${req.body.facebook}, ${req.body.linkedin}, ${req.body.twitter}, ${req.body.youtube}, ${req.body.website}, ${req.body.about})`);
+    })
+    .post((req,res,next) => {
+        res.end(`Updating settings for user ${req.params.userId} with details (${req.body.email}, ${req.body.oldpassword}, ${req.body.newpassword})`);
     })
     .delete((req,res,next) => {
         res.end(`Deleting user ${req.params.userId}`);

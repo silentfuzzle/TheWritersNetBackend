@@ -11,7 +11,7 @@ pageRouter.route('/')
         next();
     })
     .get((req,res,next) => {
-        res.end(`Sending all pages in book ${req.body.bookId}`);
+        res.end(`Sending pageid, title for all pages in book ${req.body.bookId}`);
     })
     .post((req,res,next) => {
         res.end(`Adding page ${req.body.title}`);

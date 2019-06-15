@@ -17,7 +17,6 @@ sectionRouter.route('/')
         res.end(`Adding section (${req.body.bookid}, ${req.body.title}, ${req.body.displaytitle}, ${req.body.content})`);
     });
 
-    
 sectionRouter.route('/positions')
     .all((req,res,next) => {
         res.statusCode = 200;
@@ -25,7 +24,7 @@ sectionRouter.route('/positions')
         next();
     })
     .get((req,res,next) => {
-        res.end(`Sending all sections for page ${req.body.pageid}`);
+        res.end(`Sending id, title, Truncated.content, Calculated.inUse for all sections for page ${req.body.pageid}`);
     })
     .put((req,res,next) => {
         res.end(`Updating section positions ${JSON.stringify(req.body.positions)}`);

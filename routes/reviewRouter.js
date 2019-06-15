@@ -11,7 +11,7 @@ reviewRouter.route('/')
         next();
     })
     .get((req,res,next) => {
-        res.end(`Sending all reviews for book ${req.body.bookid}`);
+        res.end(`Sending id, userid, User.displayname, rating, title, review, progress, timestamp for all reviews for book ${req.body.bookid}`);
     })
     .post((req,res,next) => {
         res.end(`Adding review (${req.body.userid}, ${req.body.bookid}, ${req.body.rating}, ${req.body.title}, ${req.body.review})`);
@@ -24,7 +24,7 @@ reviewRouter.route('/authored')
         next();
     })
     .get((req,res,next) => {
-        res.end(`Sending all reviews for user ${req.body.userid}`);
+        res.end(`Sending id, bookid, Book.title, rating, title, review, progress, timestamp for all reviews for user ${req.body.userid}`);
     });
 
 reviewRouter.route('/:reviewId')
