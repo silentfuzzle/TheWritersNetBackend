@@ -17,15 +17,11 @@ reviewRouter.route('/')
         res.end(`Adding review (${req.body.userid}, ${req.body.bookid}, ${req.body.rating}, ${req.body.title}, ${req.body.review})`);
     });
 
-reviewRouter.route('/authored')
-    .all((req,res,next) => {
-        res.statusCode = 200;
-        res.setHeader('Content-Type', 'text/plain');
-        next();
-    })
-    .get((req,res,next) => {
-        res.end(`Sending id, bookid, Book.title, rating, title, review, progress, timestamp for all reviews for user ${req.body.userid}`);
-    });
+reviewRouter.get('/authored', (req, res, next) => {
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'text/plain');
+    res.end(`Sending id, bookid, Book.title, rating, title, review, progress, timestamp for all reviews for user ${req.body.userid}`);
+});
 
 reviewRouter.route('/:reviewId')
     .all((req,res,next) => {

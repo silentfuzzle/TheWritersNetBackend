@@ -17,25 +17,17 @@ bookRouter.route('/')
         res.end(`Adding book (${req.body.title}, ${req.body.subtitle}, ${req.body.description})`);
     });
 
-bookRouter.route('/authored')
-    .all((req,res,next) => {
-        res.statusCode = 200;
-        res.setHeader('Content-Type', 'text/plain');
-        next();
-    })
-    .get((req,res,next) => {
-        res.end(`Sending id, startpageid, title, Permission.permissionid, Permission.permissiontype for all books by user ${req.body.userid}`);
-    });
+bookRouter.get('/authored', (req, res, next) => {
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'text/plain');
+    res.end(`Sending id, startpageid, title, Permission.permissionid, Permission.permissiontype for all books by user ${req.body.userid}`);
+});
 
-bookRouter.route('/opened')
-    .all((req,res,next) => {
-        res.statusCode = 200;
-        res.setHeader('Content-Type', 'text/plain');
-        next();
-    })
-    .get((req,res,next) => {
-        res.end(`Sending id, Review.reviewid, title, progress, rating, Map.currpage for all books opened by user ${req.body.userid}`);
-    });
+bookRouter.get('/opened', (req, res, next) => {
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'text/plain');
+    res.end(`Sending id, Review.reviewid, title, progress, rating, Map.currpage for all books opened by user ${req.body.userid}`);
+});
 
 bookRouter.route('/:bookId')
     .all((req,res,next) => {

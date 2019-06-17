@@ -17,16 +17,11 @@ permissionRouter.route('/')
         res.end(`Adding permission (${req.body.bookid}, ${req.body.userid}, ${req.body.permissionid})`);
     });
 
-permissionRouter.route('/types')
-    .all((req,res,next) => {
-        res.statusCode = 200;
-        res.setHeader('Content-Type', 'text/plain');
-        next();
-    })
-    .get((req,res,next) => {
-        // This could be hardcoded or in the db
-        res.end(`Sending all permission types`);
-    });
+permissionRouter.get('/types', (req, res, next) => {
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'text/plain');
+    res.end(`Sending all permission types`);
+});
 
 permissionRouter.route('/:permissionId')
     .all((req,res,next) => {
