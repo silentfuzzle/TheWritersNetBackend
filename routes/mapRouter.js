@@ -1,32 +1,27 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const authenticate = require('../authenticate');
+const mapController = require('../controllers/mysql/mapController');
 
 const mapRouter = express.Router();
 mapRouter.use(bodyParser.json());
 
-mapRouter.post('/', (req, res, next) => {
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/plain');
-    res.end(`Adding map (${req.body.userid}, ${req.body.bookid}, ${req.body.maplinks}, ${req.body.currpage})`);
-});
+// Expects bookid, pageid
+mapRouter.post('/', authenticate.verifyUser, 
+    mapController.checkMap,
+    mapController.postMap);
 
 mapRouter.route('/:mapId')
-    .all((req,res,next) => {
-        res.statusCode = 200;
-        res.setHeader('Content-Type', 'text/plain');
-        next();
-    })
+    // Returns all fields
     .get((req,res,next) => {
         res.end(`Sending map ${req.params.mapId}`);
     })
-    .post((req,res,next) => {
-        res.end(`Adding link to map ${req.params.mapId} with details (${req.body.maplinks}, ${req.body.currpage})`);
-    })
-    .put((req,res,next) => {
-        res.end(`Updating position in map ${req.params.mapId} when moving to the ${req.body.next ? 'next' : 'previous'} page in history`);
-    })
-    .delete((req,res,next) => {
-        res.end(`Deleting map ${req.params.mapId}`);
-    });
+    // Expects maplinks, pageid
+    .post(authenticate.verifyUser, mapController.putLink)
+    // Expects backward (boolean)
+    .put(authenticate.verifyUser, mapController.putPosition)
+    .delete(authenticate.verifyUser, 
+        mapController.checkMap,
+        mapController.deleteMap);
 
 module.exports = mapRouter;

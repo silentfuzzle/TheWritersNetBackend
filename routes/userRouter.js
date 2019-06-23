@@ -37,9 +37,9 @@ userRouter.get('/logout', (req, res) => {
 });
 
 userRouter.route('/:userId')
-    // Returns everything in the user table
+    // Returns all fields
     .get(userController.getUser)
-    // Expects everything in the user table except email
+    // Expects all fields except email
     .put(authenticate.verifyUser, userController.putUser)
     // Expects oldpassword, newpassword, email
     .post(authenticate.verifyUser, userController.putSettings);

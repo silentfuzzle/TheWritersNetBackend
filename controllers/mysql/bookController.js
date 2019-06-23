@@ -62,24 +62,13 @@ const bookController = {
     },
     checkBook: (req,res,next) => {
         db.pool.query(SELECT_BOOK, req.params.bookId, 
-            (error, result) => {
-                if (error) {
-                    var err = new Error(error);
-                    err.status = 500;
-                    return next(err);
-                } else if (result.ownerid !== req.user.sqlid) {
-                    var err = new Error("You are not authorized to perform this operation!");
-                    err.status = 403;
-                    return next(err);
-                }
-                else
-                    next();
-            });
+            (error, result) => 
+                db.sendCheck(error, next, result.ownerid, req.user.sqlid));
     },
     putBook: (req,res,next) => {
         db.pool.query(UPDATE_BOOK, [req.body, req.params.bookId], 
             (error, result) => {
-                if (error) next(error);
+                if (error) next(new Error(error));
         
                 res.send('updated');
             });
@@ -87,9 +76,9 @@ const bookController = {
     deleteBook: (req,res,next) => {
         db.pool.query(DELETE_BOOK, [req.params.bookId], 
             (error, result) => {
-                if (error) next(error);
+                if (error) next(new Error(error));
         
-                res.send('deleted book');
+                res.send('deleted');
             });
     }
 }
