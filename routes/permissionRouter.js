@@ -4,6 +4,24 @@ const bodyParser = require('body-parser');
 const permissionRouter = express.Router();
 permissionRouter.use(bodyParser.json());
 
+const PERMISSION_TYPES =
+[
+    {
+        id: 1,
+        name: 'Author'
+    },
+    {
+        id: 2,
+        name: 'Co-Author'
+    },
+    {
+        id: 3,
+        name: 'Viewer'
+    }
+];
+
+module.exports = PERMISSION_TYPES;
+
 permissionRouter.route('/')
     .all((req,res,next) => {
         res.statusCode = 200;

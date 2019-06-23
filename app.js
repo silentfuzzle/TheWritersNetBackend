@@ -3,6 +3,9 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+var passport = require('passport');
+var mongoose = require('mongoose');
+var config = require('./config');
 
 const indexRouter = require('./routes/indexRouter');
 const bookRouter = require('./routes/bookRouter');
@@ -12,6 +15,14 @@ const permissionRouter = require('./routes/permissionRouter');
 const reviewRouter = require('./routes/reviewRouter');
 const sectionRouter = require('./routes/sectionRouter');
 const userRouter = require('./routes/userRouter');
+
+// Setup mongodb
+const url = config.mongoConfig.mongoUrl;
+const connect = mongoose.connect(url);
+
+connect.then((db) => {
+  console.log('Connected correctly to server');
+}, (err) => { console.log(err); });
 
 var app = express();
 
@@ -24,15 +35,16 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(passport.initialize());
 
 app.use('/', indexRouter);
+app.use('/users', userRouter);
 app.use('/books', bookRouter);
 app.use('/maps', mapRouter);
 app.use('/pages', pageRouter);
 app.use('/permissions', permissionRouter);
 app.use('/reviews', reviewRouter);
 app.use('/sections', sectionRouter);
-app.use('/users', userRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

@@ -1,48 +1,36 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const authenticate = require('../authenticate');
+const bookController = require('../controllers/mysql/bookController');
 
 const bookRouter = express.Router();
 bookRouter.use(bodyParser.json());
 
 bookRouter.route('/')
-    .all((req,res,next) => {
-        res.statusCode = 200;
-        res.setHeader('Content-Type', 'text/plain');
-        next();
-    })
-    .get((req,res,next) => {
-        res.end('Sending id, title, subtitle, ownerid, User.displayname, length, rating for all books');
-    })
-    .post((req,res,next) => {
-        res.end(`Adding book (${req.body.title}, ${req.body.subtitle}, ${req.body.description})`);
-    });
+    // Returns book id, subtitle, ownerid, displayname, username, length, rating
+    .get(bookController.getBooks)
+    // Expects book title
+    .post(authenticate.verifyUser,
+        bookController.postBook);
 
-bookRouter.get('/authored', (req, res, next) => {
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/plain');
-    res.end(`Sending id, startpageid, title, Permission.permissionid, Permission.permissiontype for all books by user ${req.body.userid}`);
-});
+// Returns book id, title, startpageid, permission
+bookRouter.get('/authored/:userId',
+    bookController.getAuthoredBooks);
 
-bookRouter.get('/opened', (req, res, next) => {
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/plain');
-    res.end(`Sending id, Review.reviewid, title, progress, rating, Map.currpage for all books opened by user ${req.body.userid}`);
-});
+// Returns bookid, title, percentageread, currpageid, reviewid, rating
+bookRouter.get('/opened', 
+    authenticate.verifyUser, 
+    bookController.getOpenedBooks);
 
 bookRouter.route('/:bookId')
-    .all((req,res,next) => {
-        res.statusCode = 200;
-        res.setHeader('Content-Type', 'text/plain');
-        next();
-    })
-    .get((req,res,next) => {
-        res.end(`Sending book ${req.params.bookId}`);
-    })
-    .put((req,res,next) => {
-        res.end(`Updating book ${req.params.bookId} with details (${req.body.startpageid}, ${req.body.title}, ${req.body.subtitle}, ${req.body.description})`);
-    })
-    .delete((req,res,next) => {
-        res.end(`Deleting book ${req.params.bookId}`);
-    });
+    // Returns book id, startpageid, title, subtitle, description, visibility
+    .get(bookController.getBook)
+    // Expects book startpageid, title, subtitle, description, visibility
+    .put(authenticate.verifyUser, 
+        bookController.checkBook,
+        bookController.putBook)
+    .delete(authenticate.verifyUser, 
+        bookController.checkBook,
+        bookController.deleteBook);
 
 module.exports = bookRouter;

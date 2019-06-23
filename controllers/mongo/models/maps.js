@@ -20,7 +20,7 @@ const mapSchema = new Schema({
         default: false
     },
     visitedpages: [ locationSchema ],
-    currpage: {
+    currpageid: {
         type: String,
         required: true
     },

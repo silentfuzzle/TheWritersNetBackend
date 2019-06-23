@@ -1,39 +1,47 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const passport = require('passport');
+const authenticate = require('../authenticate');
+const userController = require('../controllers/mysql/userController');
 
 const userRouter = express.Router();
 userRouter.use(bodyParser.json());
 
-userRouter.route('/')
-    .all((req,res,next) => {
-        res.statusCode = 200;
-        res.setHeader('Content-Type', 'text/plain');
-        next();
-    })
-    .get((req,res,next) => {
-        res.end(`Sending User.userid, User.displayname for all authors for book ${req.body.bookid}`);
-    })
-    .post((req,res,next) => {
-        res.end(`Adding user (${req.body.username}, ${req.body.email}, ${req.body.password})`);
+// Returns user id, displayname, permissionid, permission
+userRouter.get('/coauthors/:bookId', userController.getCoAuthors);
+
+userRouter.post('/signup', userController.signup);
+    
+userRouter.post('/login', passport.authenticate('local'), (req, res) => {
+    var token = authenticate.getToken({_id: req.user._id});
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'application/json');
+    res.json({
+        success: true,
+        token: token,
+        status: 'You are successfully logged in!'
     });
+});
+
+userRouter.get('/logout', (req, res) => {
+    if (req.session) {
+        req.session.destroy();
+        res.clearCookie('session-id');
+        res.redirect('/');
+    }
+    else {
+        var err = new Error('You are not logged in!');
+        err.status = 403;
+        next(err);
+    }
+});
 
 userRouter.route('/:userId')
-    .all((req,res,next) => {
-        res.statusCode = 200;
-        res.setHeader('Content-Type', 'text/plain');
-        next();
-    })
-    .get((req,res,next) => {
-        res.end(`Sending user ${req.params.userId}`);
-    })
-    .put((req,res,next) => {
-        res.end(`Updating user ${req.params.userId} with details (${req.body.displayname}, ${req.body.facebook}, ${req.body.linkedin}, ${req.body.twitter}, ${req.body.youtube}, ${req.body.website}, ${req.body.about})`);
-    })
-    .post((req,res,next) => {
-        res.end(`Updating settings for user ${req.params.userId} with details (${req.body.email}, ${req.body.oldpassword}, ${req.body.newpassword})`);
-    })
-    .delete((req,res,next) => {
-        res.end(`Deleting user ${req.params.userId}`);
-    });
+    // Returns everything in the user table
+    .get(userController.getUser)
+    // Expects everything in the user table except email
+    .put(authenticate.verifyUser, userController.putUser)
+    // Expects oldpassword, newpassword, email
+    .post(authenticate.verifyUser, userController.putSettings);
 
 module.exports = userRouter;
