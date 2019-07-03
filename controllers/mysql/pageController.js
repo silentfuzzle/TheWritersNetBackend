@@ -1,7 +1,6 @@
 const db = require('./db');
-const sc = require('./sectionController');
+const pc = require('./positionController');
 const bc = require('./bookController');
-const pc = require('./permissionController');
 
 exports.SELECT_PAGES =
 `SELECT id, title
@@ -47,7 +46,13 @@ const pageController = {
     checkPage: (req,res,next) => {
         db.pool.query(SELECT_PAGE, [req.params.pageId], 
             (error, result) => {
-                bc.checkAuthor(result.bookid, req.user.sqlid, next);
+                if (error)
+                    next(new Error(error));
+                
+                if (result)
+                    bc.checkAuthor(result.bookid, req.user.sqlid, next);
+                else
+                    db.sendUnauthorized(next);
             });
     },
     postPage: (req,res,next) => {
@@ -64,7 +69,7 @@ const pageController = {
             });
     },
     deletePage: (req,res,next) => {
-        db.pool.query(sc.DELETE_POSITIONS_FROM_PAGE + '; ' + DELETE_PAGE, 
+        db.pool.query(pc.DELETE_POSITIONS_FROM_PAGE + '; ' + DELETE_PAGE, 
             [req.params.pageId, req.params.pageId], 
             (error, result) => {
                 if (error) next(new Error(error));

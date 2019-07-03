@@ -1,6 +1,7 @@
 const db = require('./db');
 const pc = require('./pageController');
 const sc = require('./sectionController');
+const oc = require('./positionController');
 const mc = require('./mapController');
 const ac = require('./permissionController');
 
@@ -106,7 +107,7 @@ const bookController = {
             });
     },
     deleteBook: (req,res,next) => {
-        db.pool.query(sc.DELETE_POSITIONS_FROM_BOOK + '; ' + 
+        db.pool.query(oc.DELETE_POSITIONS_FROM_BOOK + '; ' + 
                 sc.DELETE_SECTIONS + '; ' + 
                 pc.DELETE_PAGES + '; ' + 
                 mc.DELETE_MAPS + '; ' +

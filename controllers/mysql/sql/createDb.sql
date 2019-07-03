@@ -32,12 +32,22 @@ CREATE TABLE pages (
     id INT(11) NOT NULL AUTO_INCREMENT,
     bookid INT(11) NOT NULL,
     title VARCHAR(255) NOT NULL,
-    outgoinglinks TEXT DEFAULT '',
     PRIMARY KEY (id)
 );
 
 ALTER TABLE pages
 ADD INDEX fk_book_id (bookid);
+
+CREATE TABLE links (
+    sectionid INT(11) NOT NULL,
+    pageid INT(11) NOT NULL
+);
+
+ALTER TABLE links
+ADD INDEX fk_section_id (sectionid);
+
+ALTER TABLE links
+ADD INDEX fk_page_id (pageid);
 
 CREATE TABLE books (
     id INT(11) NOT NULL AUTO_INCREMENT,
