@@ -5,6 +5,10 @@ const SELECT_MAP =
 `SELECT * FROM maps
 WHERE id = ?`;
 
+exports.SELECT_MAP_FROM_USER =
+`SELECT percentageread FROM maps
+WHERE userid = ? AND bookid = ?`;
+
 const INSERT_MAP =
 `INSERT INTO maps (userid, bookid, visitedpages, currpageid)
 VALUES (?, ?, ?, ?)`;
