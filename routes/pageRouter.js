@@ -1,36 +1,29 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const authenticate = require('../authenticate');
+const pageController = require('../controllers/mysql/pageController').pageController;
 
 const pageRouter = express.Router();
 pageRouter.use(bodyParser.json());
 
-pageRouter.route('/')
-    .all((req,res,next) => {
-        res.statusCode = 200;
-        res.setHeader('Content-Type', 'text/plain');
-        next();
-    })
-    .get((req,res,next) => {
-        res.end(`Sending pageid, title for all pages in book ${req.body.bookId}`);
-    })
-    .post((req,res,next) => {
-        res.end(`Adding page ${req.body.title}`);
-    });
+// Expects bookid, title
+pageRouter.post('/',
+    authenticate.verifyUser,
+    pageController.checkBook,
+    pageController.postPage);
+
+// Returns id, title
+pageRouter.get('/book/:bookId', pageController.getPages);
 
 pageRouter.route('/:pageId')
-    .all((req,res,next) => {
-        res.statusCode = 200;
-        res.setHeader('Content-Type', 'text/plain');
-        next();
-    })
-    .get((req,res,next) => {
-        res.end(`Sending page ${req.params.pageId}`);
-    })
-    .put((req,res,next) => {
-        res.end(`Updating page ${req.params.pageId} to ${req.body.titl}`);
-    })
-    .delete((req,res,next) => {
-        res.end(`Deleting page ${req.params.pageId}`);
-    });
+    // Returns id, title
+    .get(pageController.getPage)
+    // Expects title
+    .put(authenticate.verifyUser, 
+        pageController.checkPage, 
+        pageController.putPage)
+    .delete(authenticate.verifyUser, 
+        pageController.checkPage, 
+        pageController.deletePage);
 
 module.exports = pageRouter;

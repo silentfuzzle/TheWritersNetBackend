@@ -1,4 +1,8 @@
 const db = require('./db');
+const pc = require('./pageController');
+const sc = require('./sectionController');
+const mc = require('./mapController');
+const ac = require('./permissionController');
 
 const SELECT_ALL_BOOKS = 
 `SELECT b.id, b.title, b.subtitle, b.ownerid, u.displayname, b.length, b.rating
@@ -24,6 +28,11 @@ const SELECT_BOOK =
 FROM books AS b
 WHERE b.id = ?`;
 
+const SELECT_BOOK_OWNER =
+`SELECT ownerid
+FROM books
+WHERE id = ?`;
+
 const INSERT_BOOK =
 `INSERT INTO books (ownerid, title)
 VALUES (?, ?)`;
@@ -37,6 +46,23 @@ const DELETE_BOOK =
 `DELETE FROM books
 WHERE id = ?
 LIMIT 1`;
+
+exports.checkAuthor = (bookid, userid, next) => {
+    db.pool.query(SELECT_BOOK_OWNER + '; ' + pc.SELECT_AUTHORS, 
+        [bookid, bookid], 
+        (error, result) => {
+            if (error) 
+                next(new Error(error));
+
+            if (result[0].ownerid === userid || 
+                    result[1].some(u => u.userid === userid)) {
+                next();
+            }
+            else {
+                db.sendUnauthorized(next);
+            }
+        });
+}
 
 const bookController = {
     getBooks: (req,res,next) => {
@@ -60,21 +86,31 @@ const bookController = {
         db.pool.query(INSERT_BOOK, [req.user.sqlid, req.body.title], 
             (error, result) => db.sendId(res, next, error, result));
     },
-    checkBook: (req,res,next) => {
-        db.pool.query(SELECT_BOOK, req.params.bookId, 
+    checkIsOwner: (req,res,next) => {
+        db.pool.query(SELECT_BOOK_OWNER, req.params.bookId, 
             (error, result) => 
                 db.sendCheck(error, next, result.ownerid, req.user.sqlid));
+    },
+    checkIsAuthor: (req,res,next) => {
+        this.checkAuthor(req.params.bookId, req.user.sqlid, next);
     },
     putBook: (req,res,next) => {
         db.pool.query(UPDATE_BOOK, [req.body, req.params.bookId], 
             (error, result) => {
-                if (error) next(new Error(error));
+                if (error) 
+                    next(new Error(error));
         
                 res.send('updated');
             });
     },
     deleteBook: (req,res,next) => {
-        db.pool.query(DELETE_BOOK, [req.params.bookId], 
+        db.pool.query(sc.DELETE_POSITIONS_FROM_BOOK + '; ' + 
+                sc.DELETE_SECTIONS + '; ' + 
+                pc.DELETE_PAGES + '; ' + 
+                mc.DELETE_MAPS + '; ' +
+                ac.DELETE_PERMISSIONS + '; ' +
+                DELETE_BOOK, 
+            Array(6).fill(req.params.bookId), 
             (error, result) => {
                 if (error) next(new Error(error));
         
@@ -83,4 +119,4 @@ const bookController = {
     }
 }
 
-module.exports = bookController;
+exports.bookController = bookController;

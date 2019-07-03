@@ -1,7 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const authenticate = require('../authenticate');
-const mapController = require('../controllers/mysql/mapController');
+const mapController = require('../controllers/mysql/mapController').mapController;
 
 const mapRouter = express.Router();
 mapRouter.use(bodyParser.json());

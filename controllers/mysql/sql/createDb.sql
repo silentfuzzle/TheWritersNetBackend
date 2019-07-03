@@ -21,6 +21,7 @@ ADD INDEX idx_mongo_id (mongoid);
 
 CREATE TABLE sections (
     id INT(11) NOT NULL AUTO_INCREMENT,
+    bookid INT(11) NOT NULL,
     title VARCHAR(255) NOT NULL,
     displaytitle BOOLEAN DEFAULT 0,
     content TEXT NOT NULL,

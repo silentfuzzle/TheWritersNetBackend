@@ -28,6 +28,10 @@ nexthistory = ?
 WHERE id = ?
 LIMIT 1`;
 
+exports.DELETE_MAPS =
+`DELETE FROM maps
+WHERE bookid = ?`;
+
 const DELETE_MAP =
 `DELETE FROM maps
 WHERE id = ?
@@ -54,7 +58,7 @@ const mapController = {
             (error, result) => db.sendId(res, next, error, result));
     },
     putLink: (req,res,next) => {
-        db.pool.query(SELECT_MAP + '; ' + pc.SELECT_PAGES, [req.params.mapId], 
+        db.pool.query(SELECT_MAP + '; ' + pc.SELECT_PAGES, [req.params.mapId, req.body.bookid], 
             (error, result) => {
                 if (error) next(new Error(error));
 
@@ -127,4 +131,4 @@ const mapController = {
     }
 }
 
-module.exports = mapController;
+exports.mapController = mapController;

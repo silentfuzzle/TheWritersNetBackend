@@ -1,7 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const authenticate = require('../authenticate');
-const bookController = require('../controllers/mysql/bookController');
+const bookController = require('../controllers/mysql/bookController').bookController;
 
 const bookRouter = express.Router();
 bookRouter.use(bodyParser.json());
@@ -26,11 +26,11 @@ bookRouter.route('/:bookId')
     // Returns book id, startpageid, title, subtitle, description, visibility
     .get(bookController.getBook)
     // Expects book startpageid, title, subtitle, description, visibility
-    .put(authenticate.verifyUser, 
-        bookController.checkBook,
+    .put(authenticate.verifyUser,
+        bookController.checkIsAuthor,
         bookController.putBook)
     .delete(authenticate.verifyUser, 
-        bookController.checkBook,
+        bookController.checkIsOwner,
         bookController.deleteBook);
 
 module.exports = bookRouter;
