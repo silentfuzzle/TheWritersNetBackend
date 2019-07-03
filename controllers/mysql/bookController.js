@@ -14,7 +14,7 @@ const SELECT_AUTHORED_BOOKS =
 FROM books AS b
 RIGHT JOIN permissions AS p ON p.bookid = b.id
 JOIN permissiontypes AS t ON p.permissionid = t.id
-WHERE (t.id = 1 AND p.userid = ?) OR b.ownerid = ?`;
+WHERE ((t.id = 1 OR t.id = 2) AND p.userid = ?) OR b.ownerid = ?`;
 
 const SELECT_OPENED_BOOKS =
 `SELECT m.bookid, b.title, m.percentageread, m.currpageid, r.id AS reviewid, r.rating
@@ -47,21 +47,23 @@ const DELETE_BOOK =
 WHERE id = ?
 LIMIT 1`;
 
+exports.returnNext = (userid, error, result, next) => {
+    if (error) 
+        next(new Error(error));
+
+    if (result[0].ownerid === userid || 
+            result[1].some(u => u.userid === userid)) {
+        next();
+    }
+    else {
+        db.sendUnauthorized(next);
+    }
+}
+
 exports.checkAuthor = (bookid, userid, next) => {
     db.pool.query(SELECT_BOOK_OWNER + '; ' + pc.SELECT_AUTHORS, 
-        [bookid, bookid], 
-        (error, result) => {
-            if (error) 
-                next(new Error(error));
-
-            if (result[0].ownerid === userid || 
-                    result[1].some(u => u.userid === userid)) {
-                next();
-            }
-            else {
-                db.sendUnauthorized(next);
-            }
-        });
+        [bookid, bookid],
+        (error, result) => this.returnNext(userid, error, result, next));
 }
 
 const bookController = {

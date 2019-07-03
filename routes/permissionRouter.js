@@ -1,57 +1,35 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const authenticate = require('../authenticate');
+const permissionController = require('../controllers/mysql/permissionController').permissionController;
 
 const permissionRouter = express.Router();
 permissionRouter.use(bodyParser.json());
 
-const PERMISSION_TYPES =
-[
-    {
-        id: 1,
-        name: 'Author'
-    },
-    {
-        id: 2,
-        name: 'Co-Author'
-    },
-    {
-        id: 3,
-        name: 'Viewer'
-    }
-];
+// Expects bookid, userid, permissionid
+permissionRouter.post('/', 
+    authenticate.verifyUser,
+    permissionController.checkIsModerator,
+    permissionController.postPermission);
 
-module.exports = PERMISSION_TYPES;
+// Returns id, username, displayname, permissionid
+permissionRouter.get('/book/:bookId', 
+    authenticate.verifyUser,
+    permissionController.checkIsModerator,
+    permissionController.getPermissions);
 
-permissionRouter.route('/')
-    .all((req,res,next) => {
-        res.statusCode = 200;
-        res.setHeader('Content-Type', 'text/plain');
-        next();
-    })
-    .get((req,res,next) => {
-        res.end(`Sending id, userid, permissionid, Permission.permissiontype, User.username for all permissions for book ${req.body.bookid}`);
-    })
-    .post((req,res,next) => {
-        res.end(`Adding permission (${req.body.bookid}, ${req.body.userid}, ${req.body.permissionid})`);
-    });
+// Returns id, name
+permissionRouter.get('/types', 
+    authenticate.verifyUser,
+    permissionController.getPermissionTypes);
 
-permissionRouter.get('/types', (req, res, next) => {
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/plain');
-    res.end(`Sending all permission types`);
-});
-
-permissionRouter.route('/:permissionId')
-    .all((req,res,next) => {
-        res.statusCode = 200;
-        res.setHeader('Content-Type', 'text/plain');
-        next();
-    })
-    .put((req,res,next) => {
-        res.end(`Updating permission ${req.params.permissionId} to permission ${req.body.permissionid}`);
-    })
-    .delete((req,res,next) => {
-        res.end(`Deleting permission ${req.params.permissionId}`);
-    });
+permissionRouter.route('/:pId')
+    // Expects permissionid
+    .put(authenticate.verifyUser,
+        permissionController.checkIsModerator,
+        permissionController.getPermissions)
+    .delete(authenticate.verifyUser,
+        permissionController.checkIsModerator,
+        permissionController.getPermissions);
 
 module.exports = permissionRouter;
