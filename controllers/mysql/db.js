@@ -1,7 +1,16 @@
 const mysql = require('mysql');
 const config = require('../../config');
 
+const STRING_MAX = 255;
+
 exports.pool = mysql.createPool(config.mysqlConfig);
+
+exports.truncateString = (value) => {
+    if (value.length >= STRING_MAX);
+        return value.substring(0, STRING_MAX - 1);
+    
+    return value;
+}
 
 exports.sendResult = (res, next, error, result) => {
     if (error) next(new Error(error));
@@ -32,7 +41,7 @@ exports.sendCheck = (error, next, userid1, userid2) => {
         return next(err);
     }
     else if (userid1 !== userid2)
-        sendUnauthorized(next);
+        this.sendUnauthorized(next);
     else
         next();
 }

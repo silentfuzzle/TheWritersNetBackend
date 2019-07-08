@@ -39,6 +39,7 @@ exports.verifyUser = passport.authenticate('jwt', {session: false});
 
 exports.optionalVerifyUser = (req,res,next) => {
     passport.authenticate('jwt', {session: false}, (err, user, info) => {
+        req.user = user;
         return next();
       })(req, res, next);
 }

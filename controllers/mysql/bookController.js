@@ -49,29 +49,25 @@ const DELETE_BOOK =
 WHERE id = ?
 LIMIT 1`;
 
-exports.returnNext = (userid, error, result, next) => {
-    if (error) 
-        next(new Error(error));
-
-    if (result[0].ownerid === userid || 
-            result[1].some(u => u.userid === userid)) {
-        next();
-    }
-    else {
-        db.sendUnauthorized(next);
-    }
+exports.checkPermission = (bookid, userid, permissionsQuery, next) => {
+    db.pool.query(SELECT_BOOK_OWNER + '; ' + permissionsQuery, 
+        [bookid, bookid],
+        (error, result) => {
+            if (error) 
+                next(new Error(error));
+        
+            if (result[0][0].ownerid === userid || 
+                    result[1].some(u => u.userid === userid)) {
+                next();
+            }
+            else {
+                db.sendUnauthorized(next);
+            }
+        });
 }
 
 exports.checkAuthor = (bookid, userid, next) => {
-    db.pool.query(SELECT_BOOK_OWNER + '; ' + ac.SELECT_COAUTHORS, 
-        [bookid, bookid],
-        (error, result) => this.returnNext(userid, error, result, next));
-}
-
-const checkViewer = (bookid, userid, next) => {
-    db.pool.query(SELECT_BOOK_OWNER + '; ' + uc.SELECT_VIEWERS, 
-        [bookid, bookid],
-        (error, result) => this.returnNext(userid, error, result, next));
+    this.checkPermission(bookid, userid, ac.SELECT_AUTHORS, next);
 }
 
 const bookController = {
@@ -89,22 +85,32 @@ const bookController = {
             (error, result) => db.sendResult(res, next, error, result));
     },
     getBook: (req,res,next) => {
+        db.sendResult(res, next, null, req.book);
+    },
+    checkIsOwner: (req,res,next) => {
+        db.pool.query(SELECT_BOOK_OWNER, req.params.bookId, 
+            (error, result) => 
+                db.sendCheck(error, next, result[0].ownerid, req.user.sqlid));
+    },
+    checkIsAuthor: (req,res,next) => {
+        this.checkAuthor(req.params.bookId, req.user.sqlid, next);
+    },
+    checkIsViewer: (req,res,next) => {
         db.pool.query(SELECT_BOOK, [req.params.bookId], 
             (error, result) => {
                 if (error)
                     next(new Error(error));
                 
-                if (result.length > 0) {
+                if (result && result.length > 0) {
+                    req.book = result;
                     if (result[0].visibility === 0) {
                         if (req.user) {
-                            checkViewer(req.params.bookId, req.user.sqlid, next);
+                            this.checkPermission(req.params.bookId, 
+                                req.user.sqlid, ac.SELECT_VIEWERS, next);
                         }
                         else {
                             db.sendUnauthorized(next);
                         }
-                    }
-                    else {
-                        db.sendResult(res, next, error, result);
                     }
                 }
                 else {
@@ -113,25 +119,53 @@ const bookController = {
             });
     },
     postBook: (req,res,next) => {
-        db.pool.query(INSERT_BOOK, [req.user.sqlid, req.body.title], 
-            (error, result) => db.sendId(res, next, error, result));
-    },
-    checkIsOwner: (req,res,next) => {
-        db.pool.query(SELECT_BOOK_OWNER, req.params.bookId, 
-            (error, result) => 
-                db.sendCheck(error, next, result.ownerid, req.user.sqlid));
-    },
-    checkIsAuthor: (req,res,next) => {
-        this.checkAuthor(req.params.bookId, req.user.sqlid, next);
+        let title = req.body.title;
+        if (title) {
+            title = db.truncateString(title);
+            db.pool.query(INSERT_BOOK, [req.user.sqlid, title], 
+                (error, result) => db.sendId(res, next, error, result));
+        }
+        else {
+            next(new Error('Please include \'title\''));
+        }
     },
     putBook: (req,res,next) => {
-        db.pool.query(UPDATE_BOOK, [req.body, req.params.bookId], 
-            (error, result) => {
-                if (error) 
-                    next(new Error(error));
+        new Promise((resolve, reject) => {
+                if (req.body.startpageid > 0) {
+                    db.pool.query(pc.SELECT_PAGE, [fields, req.params.bookId], 
+                        (error, result) => {
+                            if (error) reject(error);
         
-                res.send('updated');
-            });
+                            if (result.length > 0 && result[0].bookid === req.params.bookId)
+                                resolve(req.body.startpageid);
+                            else
+                                resolve(0);
+                        });
+                }
+                else
+                    resolve(0);
+            })
+            .then((startpageid) => {
+                let fields = {};
+                if (startpageid)
+                    fields.startpageid = startpageid;
+                if (req.body.title)
+                    fields.title = db.truncateString(req.body.title);
+                if (req.body.subtitle)
+                    fields.subtitle = db.truncateString(req.body.subtitle);
+                if (req.body.description)
+                    fields.description = req.body.description;
+                if (req.body.visibility)
+                    fields.visibility = req.body.visibility ? 1 : 0;
+            
+                db.pool.query(UPDATE_BOOK, [fields, req.params.bookId], 
+                    (error, result) => {
+                        if (error) next(new Error(error));
+                
+                        res.send('updated');
+                    });
+            })
+            .catch(error => next(error));
     },
     deleteBook: (req,res,next) => {
         db.pool.query(oc.DELETE_POSITIONS_FROM_BOOK + '; ' + 

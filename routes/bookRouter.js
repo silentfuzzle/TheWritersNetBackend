@@ -19,12 +19,13 @@ bookRouter.get('/authored/:userId',
 
 // Returns bookid, title, percentageread, currpageid, reviewid, rating
 bookRouter.get('/opened', 
-    authenticate.verifyUser, 
+    authenticate.verifyUser,
     bookController.getOpenedBooks);
 
 bookRouter.route('/:bookId')
     // Returns book id, startpageid, title, subtitle, description, visibility
     .get(authenticate.optionalVerifyUser,
+        bookController.checkIsViewer,
         bookController.getBook)
     // Expects book startpageid, title, subtitle, description, visibility
     .put(authenticate.verifyUser,

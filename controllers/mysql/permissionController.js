@@ -47,10 +47,8 @@ const permissionController = {
             (error, result) => db.sendResult(res, next, error, result));
     },
     checkIsModerator: (req,res,next) => {
-        const bookid = req.params.bookId;
-        db.pool.query(bc.SELECT_BOOK_OWNER + '; ' + SELECT_AUTHORS_AND_MODERATORS, 
-            [bookid, bookid],
-            (error, result) => bc.returnNext(req.user.sqlid, error, result, next));
+        bc.checkPermission(req.params.bookId, req.user.sqlid, 
+            SELECT_AUTHORS_AND_MODERATORS, next);
     },
     getPermissions: (req,res,next) => {
         db.pool.query(SELECT_PERMISSIONS, [req.params.bookId],

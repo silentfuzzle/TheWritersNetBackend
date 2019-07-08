@@ -8,7 +8,7 @@ exports.SELECT_PAGES =
 FROM pages
 WHERE bookid = ?`;
 
-const SELECT_PAGE =
+exports.SELECT_PAGE =
 `SELECT id, bookid, title
 FROM pages
 WHERE id = ?`;

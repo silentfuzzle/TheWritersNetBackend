@@ -11,4 +11,5 @@ exports.mysqlConfig = {
     user: 'username',
     password: 'password',
     database: 'database',
+    multipleStatements: true
 };
