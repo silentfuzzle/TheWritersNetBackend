@@ -1,6 +1,7 @@
 const db = require('./db');
 const pc = require('./positionController');
 const bc = require('./bookController');
+const mc = require('./mapController');
 
 exports.SELECT_PAGES =
 `SELECT id, title
@@ -49,8 +50,10 @@ const pageController = {
                 if (error)
                     next(new Error(error));
                 
-                if (result)
+                if (result) {
+                    req.bookid = result.bookid;
                     bc.checkAuthor(result.bookid, req.user.sqlid, next);
+                }
                 else
                     db.sendUnauthorized(next);
             });
@@ -74,7 +77,9 @@ const pageController = {
             (error, result) => {
                 if (error) next(new Error(error));
         
-                res.send('deleted');
+                mc.updateMaps(req.bookid)
+                    .then(updated => { res.send('deleted'); })
+                    .catch(error => next(new Error(error)));
             });
     }
 }

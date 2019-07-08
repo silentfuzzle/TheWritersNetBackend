@@ -13,13 +13,17 @@ mapRouter.post('/', authenticate.verifyUser,
 
 mapRouter.route('/:mapId')
     // Returns all fields
-    .get((req,res,next) => {
-        res.end(`Sending map ${req.params.mapId}`);
-    })
-    // Expects maplinks, pageid
-    .post(authenticate.verifyUser, mapController.putLink)
+    .get(authenticate.verifyUser, 
+        mapController.checkMap, 
+        mapController.getMap)
+    // Expects addlink, pageid
+    .post(authenticate.verifyUser, 
+        mapController.checkMap,
+        mapController.putLink)
     // Expects backward (boolean)
-    .put(authenticate.verifyUser, mapController.putPosition)
+    .put(authenticate.verifyUser, 
+        mapController.checkMap,
+        mapController.putPosition)
     .delete(authenticate.verifyUser, 
         mapController.checkMap,
         mapController.deleteMap);

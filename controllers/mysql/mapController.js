@@ -9,6 +9,19 @@ exports.SELECT_MAP_FROM_USER =
 `SELECT percentageread FROM maps
 WHERE userid = ? AND bookid = ?`;
 
+const SELECT_LINK_PAGE =
+`SELECT p.id
+FROM sections AS s
+JOIN positions AS p ON p.sectionid = s.sectionid
+WHERE p.pageid = ? AND s.links REGEXP ?
+LIMIT 1`;
+
+const SELECT_LINK_BOOK =
+`SELECT id
+FROM sections
+WHERE bookid = ? AND links REGEXP ?
+LIMIT 1`;
+
 const INSERT_MAP =
 `INSERT INTO maps (userid, bookid, visitedpages, currpageid)
 VALUES (?, ?, ?, ?)`;
@@ -32,6 +45,11 @@ nexthistory = ?
 WHERE id = ?
 LIMIT 1`;
 
+const SET_UPDATE =
+`UPDATE maps SET
+updatefirst = 1
+WHERE bookid = ?`;
+
 exports.DELETE_MAPS =
 `DELETE FROM maps
 WHERE bookid = ?`;
@@ -41,20 +59,36 @@ const DELETE_MAP =
 WHERE id = ?
 LIMIT 1`;
 
+exports.updateMaps = (bookid) => {
+    return new Promise((resolve, reject) => {
+        db.pool.query(SET_UPDATE, [bookid], 
+            (error, result) => {
+                if (error) 
+                    reject(error);
+
+                resolve(true);
+            });
+    });
+}
+
 const mapController = {
     checkMap: (req,res,next) => {
         db.pool.query(SELECT_MAP, [req.params.mapId], 
-            (error, result) => 
-                db.sendCheck(error, next, result.userid, req.user.sqlid));
+            (error, result) => {
+                if (error)
+                    next(new Error(error));
+                
+                req.map = result;
+                db.sendCheck(error, next, result.userid, req.user.sqlid)
+            });
     },
     getMap: (req,res,next) => {
-        db.pool.query(SELECT_MAP, [req.params.mapId], 
-            (error, result) => {
-                if (result.userid !== req.user.sqlid)
-                    db.sendUnauthorized(next);
-                else
-                    db.sendResult(res, next, error, result);
-            });
+        if (result.updatefirst) {
+            // Check and update map.maplinks if needed
+            // Update map.updatefirst to false
+        }
+
+        db.sendResult(res, next, error, req.map);
     },
     postMap: (req,res,next) => {
         db.pool.query(INSERT_MAP, 
@@ -62,29 +96,35 @@ const mapController = {
             (error, result) => db.sendId(res, next, error, result));
     },
     putLink: (req,res,next) => {
-        db.pool.query(SELECT_MAP + '; ' + pc.SELECT_PAGES, [req.params.mapId, req.body.bookid], 
+        const pageid = req.body.pageid;
+        const pageSearch = pageid + ',%|%,' +  pageid + ',%|%,' + pageid;
+
+        db.pool.query(pc.SELECT_PAGES + '; ' + SELECT_LINK_PAGE + '; ' + SELECT_LINK_BOOK, 
+            [req.map.bookid, req.map.currpageid, pageSearch, req.map.bookid, pageSearch], 
             (error, result) => {
                 if (error) next(new Error(error));
 
-                if (result[0].userid !== req.user.sqlid)
-                    db.sendUnauthorized(next);
-
-                let visitedpages = result[0].visitedpages.split(',');
-                let percentageread = result[0].percentageread;
-                if (!visitedpages.some(p => p === req.body.pageid)) {
-                    visitedpages.push(req.body.pageid);
-                    percentageread = visitedpages.length / result[1].length;
-                    visitedpages = visitedpages.join(',');
-                }
-                else
-                    visitedpages = result[0].visitedpages;
-
-                let prevhistory = result[0].prevhistory.split(',');
-                prevhistory.push(result[0].currpageid);
+                let prevhistory = req.map.prevhistory.split(',');
+                prevhistory.push(req.map.currpageid);
                 prevhistory = prevhistory.join(',');
 
+                let visitedpages = req.map.visitedpages.split(',');
+                let percentageread = req.map.percentageread;
+                if (!visitedpages.some(p => p === pageid)) {
+                    if ((req.body.addlink && result[1]) || !result[2]) {
+                        visitedpages.push(pageid);
+                        percentageread = visitedpages.length / result[0].length;
+                    }
+                }
+                visitedpages = visitedpages.join(',');
+
+                let maplinks = req.map.maplinks;
+                if (req.body.addlink && result[1]) {
+                    // Update maplinks
+                }
+
                 db.pool.query(UPDATE_LINK, 
-                    [req.body.maplinks, visitedpages, req.body.pageid, prevhistory, '', percentageread, req.params.mapId], 
+                    [maplinks, visitedpages, pageid, prevhistory, '', percentageread, req.params.mapId], 
                     (error, result) => {
                         if (error) next(new Error(error));
                 
@@ -93,36 +133,28 @@ const mapController = {
             });
     },
     putPosition: (req,res,next) => {
-        db.pool.query(SELECT_MAP, [req.params.mapId], 
+        let prevhistory = req.map.prevhistory.split(',');
+        let nexthistory = req.map.nexthistory.split(',');
+        
+        let currpageid = 0;
+        if (req.body.backward) {
+            currpageid = prevhistory.pop();
+            nexthistory.push(req.map.currpageid);
+        }
+        else {
+            currpageid = nexthistory.pop();
+            prevhistory.push(req.map.currpageid);
+        }
+
+        prevhistory = prevhistory.join(',');
+        nexthistory = nexthistory.join(',');
+
+        db.pool.query(UPDATE_POSITION, 
+            [currpageid, prevhistory, nexthistory, req.params.mapId], 
             (error, result) => {
                 if (error) next(new Error(error));
-
-                if (result.userid !== req.user.sqlid)
-                    db.sendUnauthorized(next);
-
-                let prevhistory = result.prevhistory.split(',');
-                let nexthistory = result.nexthistory.split(',');
-                
-                let currpageid = 0;
-                if (req.body.backward) {
-                    currpageid = prevhistory.pop();
-                    nexthistory.push(result.currpageid);
-                }
-                else {
-                    currpageid = nexthistory.pop();
-                    prevhistory.push(result.currpageid);
-                }
-
-                prevhistory = prevhistory.join(',');
-                nexthistory = nexthistory.join(',');
-
-                db.pool.query(UPDATE_POSITION, 
-                    [currpageid, prevhistory, nexthistory, req.params.mapId], 
-                    (error, result) => {
-                        if (error) next(new Error(error));
-                
-                        res.send('updated');
-                    });
+        
+                res.send('updated');
             });
     },
     deleteMap: (req,res,next) => {

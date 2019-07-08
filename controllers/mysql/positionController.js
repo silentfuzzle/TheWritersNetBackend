@@ -1,11 +1,12 @@
 const db = require('./db');
 const bc = require('./bookController');
+const mc = require('./mapController');
 
 const SELECT_POSITIONS =
 `SELECT p.id, p.position, s.title, s.displaytitle, s.content
 FROM positions AS p
 JOIN sections AS s ON s.id = p.sectionid
-WHERE p.pageid = 1
+WHERE p.pageid = ?
 ORDER BY p.position ASC`;
 
 const SELECT_BOOK =
@@ -59,8 +60,10 @@ const positionController = {
                 if (error)
                     next(new Error(error));
 
-                if (result)
+                if (result) {
+                    req.bookid = result.bookid;
                     bc.checkAuthor(result.bookid, req.user.sqlid, next);
+                }
                 else
                     db.sendUnauthorized(next);
             });
@@ -78,9 +81,12 @@ const positionController = {
         db.pool.query(DELETE_POSITION, 
             [req.params.positionId], 
             (error, result) => {
-                if (error) next(new Error(error));
-        
-                res.send('deleted');
+                if (error) 
+                    next(new Error(error));
+
+                mc.updateMaps(req.bookid)
+                    .then(updated => { res.send('deleted'); })
+                    .catch(error => next(new Error(error)));
             });
     },
 }
