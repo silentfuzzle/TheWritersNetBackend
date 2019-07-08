@@ -24,7 +24,8 @@ bookRouter.get('/opened',
 
 bookRouter.route('/:bookId')
     // Returns book id, startpageid, title, subtitle, description, visibility
-    .get(bookController.getBook)
+    .get(authenticate.optionalVerifyUser,
+        bookController.getBook)
     // Expects book startpageid, title, subtitle, description, visibility
     .put(authenticate.verifyUser,
         bookController.checkIsAuthor,

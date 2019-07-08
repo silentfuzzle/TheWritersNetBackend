@@ -1,3 +1,11 @@
+# The Writer's Net Backend
+
+## TODO
+
+* Cannot get individual authored books even when signed in
+
+## Reference
+
 cd Desktop\NucampFolder\5-NodeJS-Express-MongoDB\the-writers-net-backend
 cd Desktop\NucampFolder\5-NodeJS-Express-MongoDB\mongodb
 mongod --dbpath=data --bind_ip 127.0.0.1

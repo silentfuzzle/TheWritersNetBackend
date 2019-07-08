@@ -18,6 +18,10 @@ exports.SELECT_AUTHORS =
 `SELECT userid FROM permissions
 WHERE permissionid = 1 AND bookid = ?`;
 
+exports.SELECT_VIEWERS = 
+`SELECT userid FROM permissions
+WHERE bookid = ?`;
+
 const INSERT_PERMISSION =
 `INSERT INTO permissions (bookid, userid, permissionid)
 VALUES (?, ?, ?)`;

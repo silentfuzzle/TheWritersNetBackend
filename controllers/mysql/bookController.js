@@ -8,14 +8,15 @@ const ac = require('./permissionController');
 const SELECT_ALL_BOOKS = 
 `SELECT b.id, b.title, b.subtitle, b.ownerid, u.displayname, b.length, b.rating
 FROM books AS b
-JOIN users AS u ON u.id = b.ownerid`;
+JOIN users AS u ON u.id = b.ownerid
+WHERE b.length > 0 AND b.visibility = 1`;
 
 const SELECT_AUTHORED_BOOKS =
 `SELECT b.id, b.title, b.startpageid, IFNULL(t.name, 'Author') AS permission
 FROM books AS b
-RIGHT JOIN permissions AS p ON p.bookid = b.id
-JOIN permissiontypes AS t ON p.permissionid = t.id
-WHERE ((t.id = 1 OR t.id = 2) AND p.userid = ?) OR b.ownerid = ?`;
+LEFT JOIN permissions AS p ON p.bookid = b.id
+LEFT JOIN permissiontypes AS t ON p.permissionid = t.id
+WHERE p.userid = ? OR b.ownerid = ?`;
 
 const SELECT_OPENED_BOOKS =
 `SELECT m.bookid, b.title, m.percentageread, m.currpageid, r.id AS reviewid, r.rating
@@ -62,7 +63,13 @@ exports.returnNext = (userid, error, result, next) => {
 }
 
 exports.checkAuthor = (bookid, userid, next) => {
-    db.pool.query(SELECT_BOOK_OWNER + '; ' + pc.SELECT_AUTHORS, 
+    db.pool.query(SELECT_BOOK_OWNER + '; ' + ac.SELECT_COAUTHORS, 
+        [bookid, bookid],
+        (error, result) => this.returnNext(userid, error, result, next));
+}
+
+const checkViewer = (bookid, userid, next) => {
+    db.pool.query(SELECT_BOOK_OWNER + '; ' + uc.SELECT_VIEWERS, 
         [bookid, bookid],
         (error, result) => this.returnNext(userid, error, result, next));
 }
@@ -83,7 +90,27 @@ const bookController = {
     },
     getBook: (req,res,next) => {
         db.pool.query(SELECT_BOOK, [req.params.bookId], 
-            (error, result) => db.sendResult(res, next, error, result));
+            (error, result) => {
+                if (error)
+                    next(new Error(error));
+                
+                if (result.length > 0) {
+                    if (result[0].visibility === 0) {
+                        if (req.user) {
+                            checkViewer(req.params.bookId, req.user.sqlid, next);
+                        }
+                        else {
+                            db.sendUnauthorized(next);
+                        }
+                    }
+                    else {
+                        db.sendResult(res, next, error, result);
+                    }
+                }
+                else {
+                    db.sendUnauthorized(next);
+                }
+            });
     },
     postBook: (req,res,next) => {
         db.pool.query(INSERT_BOOK, [req.user.sqlid, req.body.title], 

@@ -10,12 +10,12 @@ var config = require('./config');
 const indexRouter = require('./routes/indexRouter');
 const userRouter = require('./routes/userRouter');
 const bookRouter = require('./routes/bookRouter');
-const mapRouter = require('./routes/mapRouter');
-const pageRouter = require('./routes/pageRouter');
-const permissionRouter = require('./routes/permissionRouter');
-const reviewRouter = require('./routes/reviewRouter');
-const sectionRouter = require('./routes/sectionRouter');
-const positionRouter = require('./routes/positionRouter');
+//const mapRouter = require('./routes/mapRouter');
+//const pageRouter = require('./routes/pageRouter');
+//const permissionRouter = require('./routes/permissionRouter');
+//const reviewRouter = require('./routes/reviewRouter');
+//const sectionRouter = require('./routes/sectionRouter');
+//const positionRouter = require('./routes/positionRouter');
 
 // Setup mongodb
 const url = config.mongoConfig.mongoUrl;
@@ -41,12 +41,12 @@ app.use(passport.initialize());
 app.use('/', indexRouter);
 app.use('/users', userRouter);
 app.use('/books', bookRouter);
-app.use('/maps', mapRouter);
-app.use('/pages', pageRouter);
-app.use('/permissions', permissionRouter);
-app.use('/reviews', reviewRouter);
-app.use('/sections', sectionRouter);
-app.use('/positions', positionRouter);
+//app.use('/maps', mapRouter);
+//app.use('/pages', pageRouter);
+//app.use('/permissions', permissionRouter);
+//app.use('/reviews', reviewRouter);
+//app.use('/sections', sectionRouter);
+//app.use('/positions', positionRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
