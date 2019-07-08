@@ -50,10 +50,6 @@ const SET_UPDATE =
 updatefirst = 1
 WHERE bookid = ?`;
 
-exports.DELETE_MAPS =
-`DELETE FROM maps
-WHERE bookid = ?`;
-
 const DELETE_MAP =
 `DELETE FROM maps
 WHERE id = ?

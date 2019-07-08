@@ -6,6 +6,7 @@ const STRING_MAX = 255;
 exports.pool = mysql.createPool(config.mysqlConfig);
 
 exports.truncateString = (value) => {
+    value = value.toString();
     if (value.length >= STRING_MAX);
         return value.substring(0, STRING_MAX - 1);
     
@@ -18,7 +19,7 @@ exports.sendResult = (res, next, error, result) => {
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
     res.json(result);
-};
+}
 
 exports.sendId = (res, next, error, result) => {
     if (error) next(new Error(error));
