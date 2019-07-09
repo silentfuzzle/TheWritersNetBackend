@@ -34,15 +34,12 @@ LIMIT 1`;
 
 const pageController = {
     getPages: (req,res,next) => {
-        db.pool.query(SELECT_PAGES, [req.params.bookId],
+        db.pool.query(this.SELECT_PAGES, [req.params.bookId],
             (error, result) => db.sendResult(res, next, error, result));
     },
     getPage: (req,res,next) => {
-        db.pool.query(SELECT_PAGE, [req.params.pageId], 
+        db.pool.query(this.SELECT_PAGE, [req.params.pageId], 
             (error, result) => db.sendResult(res, next, error, result));
-    },
-    checkBook: (req,res,next) => {
-        bc.checkAuthor(req.body.bookid, req.user.sqlid, next);
     },
     checkPage: (req,res,next) => {
         db.pool.query(SELECT_PAGE, [req.params.pageId], 
@@ -50,37 +47,44 @@ const pageController = {
                 if (error)
                     next(new Error(error));
                 
-                if (result) {
-                    req.bookid = result.bookid;
-                    bc.checkAuthor(result.bookid, req.user.sqlid, next);
+                if (result.length > 0) {
+                    const bookid = result[0].bookid;
+                    req.bookid = bookid;
+                    bc.checkAuthor(bookid, req.user.sqlid, next);
                 }
                 else
                     db.sendUnauthorized(next);
             });
     },
     postPage: (req,res,next) => {
-        db.pool.query(INSERT_PAGE, [req.body.bookid, req.body.title], 
-            (error, result) => db.sendId(res, next, error, result));
+        let title = req.body.title;
+        if (title) {
+            title = db.truncateString(title);
+
+            db.pool.query(INSERT_PAGE, [req.params.bookId, title], 
+                (error, result) => db.sendId(res, next, error, result));
+        }
+        else
+            next(new Error('Please include \'title\''));
     },
     putPage: (req,res,next) => {
-        db.pool.query(UPDATE_PAGE, 
-            [req.body.title, req.params.pageId], 
-            (error, result) => {
-                if (error) next(new Error(error));
-        
-                res.send('updated');
-            });
+        let title = req.body.title;
+        if (title) {
+            title = db.truncateString(title);
+
+            db.pool.query(UPDATE_PAGE, [title, req.params.pageId], 
+                (error, result) => db.sendResult(res, next, error, result));
+        }
+        else
+            next(new Error('Please include \'title\''));
     },
     deletePage: (req,res,next) => {
-        db.pool.query(pc.DELETE_POSITIONS_FROM_PAGE + '; ' + DELETE_PAGE, 
-            [req.params.pageId, req.params.pageId], 
-            (error, result) => {
-                if (error) next(new Error(error));
-        
-                mc.updateMaps(req.bookid)
-                    .then(updated => { res.send('deleted'); })
-                    .catch(error => next(new Error(error)));
-            });
+        const pageid = req.params.pageId;
+        db.pool.query(pc.DELETE_POSITIONS_FROM_PAGE + '; ' + 
+                DELETE_PAGE + '; ' + 
+                mc.SET_UPDATE, 
+            [pageid, pageid, req.bookid], 
+            (error, result) => db.sendResult(res, next, error, result));
     }
 }
 

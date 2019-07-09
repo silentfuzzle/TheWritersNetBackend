@@ -2,7 +2,7 @@
 
 ## TODO
 
-* Cannot get individual authored books even when signed in
+* Cannot get private individual pages
 
 ## Reference
 

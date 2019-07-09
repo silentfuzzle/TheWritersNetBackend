@@ -45,7 +45,7 @@ nexthistory = ?
 WHERE id = ?
 LIMIT 1`;
 
-const SET_UPDATE =
+exports.SET_UPDATE =
 `UPDATE maps SET
 updatefirst = 1
 WHERE bookid = ?`;
